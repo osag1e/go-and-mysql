@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -39,7 +40,24 @@ func (bh *BooksHandler) HandleCreateBook(w http.ResponseWriter, r *http.Request)
 }
 
 func (bh *BooksHandler) HandleFetchBooks(w http.ResponseWriter, r *http.Request) {
-	books, err := bh.booksRepo.GetBooks()
+	query := r.URL.Query()
+	offsetParam := query.Get("offset")
+	limitParam := query.Get("limit")
+
+	offset := 0
+	limit := 10
+
+	if limitParam != "" {
+		if l, err := strconv.Atoi(limitParam); err == nil {
+			limit = l
+		}
+	}
+	if offsetParam != "" {
+		if o, err := strconv.Atoi(offsetParam); err == nil {
+			offset = o
+		}
+	}
+	books, err := bh.booksRepo.GetBooks(offset, limit)
 	if err != nil {
 		render.JSON(w, r, map[string]string{"error": "Books not found"})
 		return
