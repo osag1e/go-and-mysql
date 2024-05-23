@@ -10,7 +10,7 @@ import (
 
 type BooksRepository interface {
 	InsertBook(book *model.Book) (*model.Book, error)
-	GetBooks() ([]model.Book, error)
+	GetBooks(int, int) ([]model.Book, error)
 	DeleteBookByID(bookID uuid.UUID) error
 }
 
@@ -35,9 +35,9 @@ func (b *BooksStore) InsertBook(book *model.Book) (*model.Book, error) {
 	return book, nil
 }
 
-func (b *BooksStore) GetBooks() ([]model.Book, error) {
-	query := "SELECT id, title, price FROM books"
-	rows, err := b.DB.Query(query)
+func (b *BooksStore) GetBooks(offset int, limit int) ([]model.Book, error) {
+	query := "SELECT id, title, price FROM books LIMIT ? OFFSET ?"
+	rows, err := b.DB.Query(query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get books: %v", err)
 	}
@@ -47,7 +47,7 @@ func (b *BooksStore) GetBooks() ([]model.Book, error) {
 	for rows.Next() {
 		var book model.Book
 		if err := rows.Scan(&book.ID, &book.Title, &book.Price); err != nil {
-			return nil, fmt.Errorf("fialed to scan book: %v", err)
+			return nil, fmt.Errorf("failed to scan book: %v", err)
 		}
 		books = append(books, book)
 	}
